@@ -188,12 +188,19 @@ const Home = () => {
                     {currentQuestion.options.map((option, idx) => (
                       <div
                         key={option}
-                        onClick={() =>
-                          setAnswers((prev) => ({ ...prev, [currentQuestion.id]: option }))
-                        }
+                        onClick={() => {
+                          setAnswers((prev) => ({ ...prev, [currentQuestion.id]: option }));
+
+                          // 🔊 Play sound on selection for Question 1
+                          if (currentQuestion.id === 1) {
+                            if (option === "Bhau-Bhau") new Audio('/sounds/Dog Barking.mp3').play();
+                            if (option === "Meow-Meow") new Audio('/sounds/Cat Sound.mp3').play();
+                            if (option === "Oink-Oink") new Audio('/sounds/pig-oink-47167.mp3').play();
+                          }
+                        }}
                         className={`rounded-xl p-5 text-center cursor-pointer transition-all duration-300 ${answers[currentQuestion.id] === option
-                            ? "bg-cyan-100"
-                            : "bg-gray-50"
+                          ? "bg-cyan-100"
+                          : "bg-gray-50"
                           } ${idx === highlightedOption
                             ? "ring-4 ring-yellow-400 scale-105 bg-yellow-100 shadow-xl"
                             : ""
@@ -208,9 +215,10 @@ const Home = () => {
                 {/* Navigation */}
                 <div className="flex justify-end gap-4 mt-10 max-w-3xl mx-auto w-full">
                   <button
-                    onClick={() =>
-                      setCurrentQuestionIndex((i) => Math.max(i - 1, 0))
-                    }
+                    onClick={() => {
+                      setHighlightedOption(null);
+                      setCurrentQuestionIndex((i) => Math.max(i - 1, 0));
+                    }}
                     disabled={currentQuestionIndex === 0}
                     className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center disabled:opacity-50"
                   >
@@ -220,6 +228,7 @@ const Home = () => {
                   <button
                     onClick={() => {
                       if (answers[currentQuestion.id]) {
+                        setHighlightedOption(null);
                         if (currentQuestionIndex < questions.length - 1) {
                           setCurrentQuestionIndex(currentQuestionIndex + 1);
                         } else {
@@ -241,6 +250,7 @@ const Home = () => {
                 total={questions.length}
                 onRestart={() => {
                   setAnswers({});
+                  setHighlightedOption(null);
                   setCurrentQuestionIndex(0);
                   setShowResult(false);
                 }}
