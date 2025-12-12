@@ -2,6 +2,7 @@
 
 import { motion, animate, useMotionValue, useTransform } from "framer-motion";
 import { useEffect } from "react";
+import confetti from "canvas-confetti";
 
 interface ResultCardProps {
     score: number;
@@ -13,6 +14,47 @@ export function ResultCard({ score, total, onRestart }: ResultCardProps) {
     const percentage = Math.round((score / total) * 100);
     const count = useMotionValue(0);
     const rounded = useTransform(count, (latest) => Math.round(latest));
+
+    // 🏆 Celebration Effect
+    useEffect(() => {
+        // 1. Play "Yay" Sound
+        const audio = new Audio('/sounds/children-saying-yay-praise-and-worship-jesus-299607.mp3');
+        audio.volume = 0.6;
+        audio.play().catch(e => console.error("Audio play failed:", e));
+
+        // 2. Burst Confetti
+        const end = Date.now() + 1000;
+        const colors = ['#bb0000', '#ffffff'];
+
+        (function frame() {
+            confetti({
+                particleCount: 5,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+                colors: colors
+            });
+            confetti({
+                particleCount: 5,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+                colors: colors
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        }());
+
+        // Big center burst too
+        confetti({
+            particleCount: 150,
+            spread: 100,
+            origin: { y: 0.6 }
+        });
+
+    }, []);
 
     useEffect(() => {
         const controls = animate(count, percentage, {

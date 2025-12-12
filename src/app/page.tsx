@@ -19,6 +19,8 @@ const Home = () => {
   const [showResult, setShowResult] = useState(false);
   const [highlightedOption, setHighlightedOption] = useState<number | null>(null);
   const [popupImage, setPopupImage] = useState<string | null>(null);
+  const [liquidColor, setLiquidColor] = useState<string | null>(null);
+  const [showStarryNight, setShowStarryNight] = useState(false);
 
   // Keep zoom logic
   useEffect(() => {
@@ -48,9 +50,10 @@ const Home = () => {
     }
 
     let isCancelled = false;
-    const qText = questions[currentQuestionIndex].question;
+    // Strip "1. ", "2. " from the question text
+    const qText = questions[currentQuestionIndex].question.replace(/^\d+\.\s*/, '');
     const utterance = new SpeechSynthesisUtterance(qText);
-    utterance.rate = 0.9;
+    utterance.rate = 0.8; // Slower for kids
 
     // Helper: Option Highlight + Popup Delay
     const runVisualSequence = async () => {
@@ -112,7 +115,13 @@ const Home = () => {
 
       const voices = window.speechSynthesis.getVoices();
       if (voices.length > 0) {
-        const preferredVoice = voices.find(v => v.lang.startsWith('en')) || voices[0];
+        // Try to find a softer/kid-friendly voice
+        const preferredVoice = voices.find(v =>
+          v.name.includes('Google US English') ||
+          v.name.includes('Samantha') ||
+          v.name.includes('Zira')
+        ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+
         if (preferredVoice) utterance.voice = preferredVoice;
       }
 
@@ -237,6 +246,28 @@ const Home = () => {
                             if (option === "Meow-Meow") new Audio('/sounds/Cat Sound.mp3').play();
                             if (option === "Oink-Oink") new Audio('/sounds/pig-oink-47167.mp3').play();
                           }
+
+                          // 🌋 Lava Flow Animation for Question 3 (Bananas)
+                          if (currentQuestion.id === 3) {
+                            let color = null;
+                            if (option === "Blue") color = "#3b82f6";   // blue-500
+                            if (option === "Yellow") color = "#eab308"; // yellow-500
+                            if (option === "Red") color = "#ef4444";    // red-500
+
+                            if (color) {
+                              setLiquidColor(color);
+                              setTimeout(() => setLiquidColor(null), 4000);
+                            }
+                          }
+
+                          // 🌌 Starry Night Animation for Question 4 (Stars)
+                          if (currentQuestion.id === 4) {
+                            setShowStarryNight(true);
+                            setTimeout(() => {
+                              setShowStarryNight(false);
+                              setShowResult(true);
+                            }, 4000); // 4 seconds of awe
+                          }
                         }}
                         className={`rounded-xl p-5 text-center cursor-pointer transition-all duration-300 ${answers[currentQuestion.id] === option
                           ? "bg-cyan-100"
@@ -348,6 +379,88 @@ const Home = () => {
                   height={300}
                   className="rounded-xl object-cover"
                 />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* 🌋 Lava Flow Overlay */}
+        <AnimatePresence mode="sync">
+          {liquidColor && !showResult && (
+            <motion.div
+              key={liquidColor} // 🔑 Force re-render on color change
+              initial={{ y: "-100%" }}
+              animate={{ y: "200%" }} // Go further down to clear screen
+              exit={{ opacity: 0 }}
+              transition={{ duration: 4, ease: [0.4, 0, 0.2, 1] }} // Custom bezier for liquid feel
+              className="fixed inset-0 z-50 pointer-events-none flex flex-col justify-end"
+            >
+              {/* Main Liquid Body */}
+              <div
+                className="w-full relative grow"
+                style={{ backgroundColor: liquidColor }}
+              >
+                {/* Wavy Leading Edge (SVG) */}
+                <div className="absolute -bottom-1 w-full translate-y-[99%]">
+                  <svg viewBox="0 0 1440 320" className="w-full h-auto" preserveAspectRatio="none">
+                    <path
+                      fill={liquidColor}
+                      fillOpacity="1"
+                      d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,197.3C1248,171,1344,149,1392,138.7L1440,128L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"
+                      transform="scale(1, -1) translate(0, -320)" // Flip to point down
+                    ></path>
+                  </svg>
+                  {/* Dripping effects (CSS pseudo-shapes for extra irregularity) */}
+                  <div className="absolute top-0 left-[20%] w-16 h-32 rounded-full -translate-y-1/2" style={{ backgroundColor: liquidColor }}></div>
+                  <div className="absolute top-0 right-[30%] w-24 h-40 rounded-full -translate-y-1/2" style={{ backgroundColor: liquidColor }}></div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* 🌌 Starry Night Overlay */}
+        <AnimatePresence>
+          {showStarryNight && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1 }}
+              className="fixed inset-0 z-[60] bg-black pointer-events-none"
+            >
+              {[...Array(50)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{
+                    opacity: [0.2, 1, 0.2],
+                    scale: [1, 1.5, 1]
+                  }}
+                  transition={{
+                    duration: Math.random() * 2 + 1,
+                    repeat: Infinity,
+                    delay: Math.random() * 2
+                  }}
+                  className="absolute bg-white rounded-full"
+                  style={{
+                    top: `${Math.random() * 100}%`,
+                    left: `${Math.random() * 100}%`,
+                    width: `${Math.random() * 3 + 1}px`,
+                    height: `${Math.random() * 3 + 1}px`,
+                    boxShadow: "0 0 4px white"
+                  }}
+                />
+              ))}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1 }}
+                  className="text-white text-3xl font-serif tracking-widest"
+                >
+                  The sky represents the infinite...
+                </motion.p>
               </div>
             </motion.div>
           )}
