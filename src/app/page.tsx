@@ -18,6 +18,7 @@ const Home = () => {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [showResult, setShowResult] = useState(false);
   const [highlightedOption, setHighlightedOption] = useState<number | null>(null);
+  const [popupImage, setPopupImage] = useState<string | null>(null);
 
   // Keep zoom logic
   useEffect(() => {
@@ -37,68 +38,107 @@ const Home = () => {
     }
   }, [showResult]);
 
-  // 🔊 Audio Narration Sequence for First Question
+  // 🔊 Interactive Narration Sequences
   useEffect(() => {
-    // Only run for the first question and if not showing result
-    if (currentQuestionIndex !== 0 || showResult) {
+    if (showResult) {
       setHighlightedOption(null);
+      setPopupImage(null);
       window.speechSynthesis.cancel();
       return;
     }
 
     let isCancelled = false;
-    const utterance = new SpeechSynthesisUtterance("What sound does a cat make?");
-    utterance.rate = 0.9; // Slightly slower for clarity
+    const qText = questions[currentQuestionIndex].question;
+    const utterance = new SpeechSynthesisUtterance(qText);
+    utterance.rate = 0.9;
 
-    // Audio instances
-    const dogAudio = new Audio('/sounds/Dog Barking.mp3');
-    const catAudio = new Audio('/sounds/Cat Sound.mp3');
-    const pigAudio = new Audio('/sounds/pig-oink-47167.mp3');
-
-    // Sequence Helper
-    const playSequence = () => {
+    // Helper: Option Highlight + Popup Delay
+    const runVisualSequence = async () => {
       if (isCancelled) return;
+      const sequence = [
+        { idx: 0, img: '/images/shoes.jpeg' },
+        { idx: 1, img: '/images/ice-cream.jpeg' },
+        { idx: 2, img: '/images/book.png' }
+      ];
 
-      // 1. Highlight Option 1 (Dog) & Play Sound
-      setHighlightedOption(0);
-      dogAudio.play().catch(e => console.error("Audio play failed", e));
+      for (const step of sequence) {
+        if (isCancelled) break;
+        setHighlightedOption(step.idx);
+        setPopupImage(step.img);
 
-      dogAudio.onended = () => {
-        if (isCancelled) return;
-        // 2. Highlight Option 2 (Cat) & Play Sound
-        setHighlightedOption(1);
-        catAudio.play().catch(e => console.error("Audio play failed", e));
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Show for 2s
 
-        catAudio.onended = () => {
-          if (isCancelled) return;
-          // 3. Highlight Option 3 (Pig) & Play Sound
-          setHighlightedOption(2);
-          pigAudio.play().catch(e => console.error("Audio play failed", e));
-
-          pigAudio.onended = () => {
-            if (isCancelled) return;
-            setHighlightedOption(null); // End sequence
-          };
-        };
-      };
+        if (isCancelled) break;
+        setPopupImage(null);
+        await new Promise(resolve => setTimeout(resolve, 300)); // Short gap
+      }
+      if (!isCancelled) setHighlightedOption(null);
     };
 
-    utterance.onend = playSequence;
+    // Helper: Option Highlight + Audio
+    const runAudioSequence = () => {
+      if (isCancelled) return;
+      const dogAudio = new Audio('/sounds/Dog Barking.mp3');
+      const catAudio = new Audio('/sounds/Cat Sound.mp3');
+      const pigAudio = new Audio('/sounds/pig-oink-47167.mp3');
 
-    // Start Narration
-    // Small delay to ensure clean start
-    const timer = setTimeout(() => {
+      const playStep = (idx: number, audio: HTMLAudioElement, next: () => void) => {
+        if (isCancelled) return;
+        setHighlightedOption(idx);
+        audio.play().catch(e => console.error(e));
+        audio.onended = () => {
+          if (!isCancelled) next();
+        };
+      };
+
+      playStep(0, dogAudio, () =>
+        playStep(1, catAudio, () =>
+          playStep(2, pigAudio, () => {
+            if (!isCancelled) setHighlightedOption(null);
+          })
+        )
+      );
+    };
+
+    utterance.onend = () => {
+      if (currentQuestionIndex === 0) runAudioSequence();
+      else if (currentQuestionIndex === 1) runVisualSequence();
+      // else: standard narration ends, do nothing
+    };
+
+    const startSpeaking = () => {
+      if (isCancelled) return;
       window.speechSynthesis.cancel();
+
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        const preferredVoice = voices.find(v => v.lang.startsWith('en')) || voices[0];
+        if (preferredVoice) utterance.voice = preferredVoice;
+      }
+
       window.speechSynthesis.speak(utterance);
+    };
+
+    // Voice Loading Check
+    const timer = setTimeout(() => {
+      if (window.speechSynthesis.getVoices().length === 0) {
+        window.speechSynthesis.onvoiceschanged = () => {
+          window.speechSynthesis.onvoiceschanged = null;
+          startSpeaking();
+        };
+      } else {
+        startSpeaking();
+      }
     }, 500);
 
     return () => {
       isCancelled = true;
       clearTimeout(timer);
       window.speechSynthesis.cancel();
-      dogAudio.pause(); dogAudio.currentTime = 0;
-      catAudio.pause(); catAudio.currentTime = 0;
-      pigAudio.pause(); pigAudio.currentTime = 0;
+      // @ts-ignore
+      if (window.speechSynthesis.onvoiceschanged) window.speechSynthesis.onvoiceschanged = null;
+      setHighlightedOption(null);
+      setPopupImage(null);
     };
   }, [currentQuestionIndex, showResult]);
 
@@ -284,6 +324,29 @@ const Home = () => {
                   width={100}
                   height={100}
                   className="object-contain"
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* 🖼️ Animated Popup Image (For Q2 Visual Sequence) */}
+        <AnimatePresence>
+          {popupImage && !showResult && (
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 15 }}
+              className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+            >
+              <div className="bg-white p-4 rounded-3xl shadow-2xl border-4 border-cyan-200">
+                <Image
+                  src={popupImage}
+                  alt="Visual Clue"
+                  width={300}
+                  height={300}
+                  className="rounded-xl object-cover"
                 />
               </div>
             </motion.div>
