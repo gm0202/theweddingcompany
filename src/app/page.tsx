@@ -17,6 +17,7 @@ const Home = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [showResult, setShowResult] = useState(false);
+  const [highlightedOption, setHighlightedOption] = useState<number | null>(null);
 
   // Keep zoom logic
   useEffect(() => {
@@ -35,6 +36,71 @@ const Home = () => {
       document.documentElement.style.background = "";
     }
   }, [showResult]);
+
+  // 🔊 Audio Narration Sequence for First Question
+  useEffect(() => {
+    // Only run for the first question and if not showing result
+    if (currentQuestionIndex !== 0 || showResult) {
+      setHighlightedOption(null);
+      window.speechSynthesis.cancel();
+      return;
+    }
+
+    let isCancelled = false;
+    const utterance = new SpeechSynthesisUtterance("What sound does a cat make?");
+    utterance.rate = 0.9; // Slightly slower for clarity
+
+    // Audio instances
+    const dogAudio = new Audio('/sounds/Dog Barking.mp3');
+    const catAudio = new Audio('/sounds/Cat Sound.mp3');
+    const pigAudio = new Audio('/sounds/pig-oink-47167.mp3');
+
+    // Sequence Helper
+    const playSequence = () => {
+      if (isCancelled) return;
+
+      // 1. Highlight Option 1 (Dog) & Play Sound
+      setHighlightedOption(0);
+      dogAudio.play().catch(e => console.error("Audio play failed", e));
+
+      dogAudio.onended = () => {
+        if (isCancelled) return;
+        // 2. Highlight Option 2 (Cat) & Play Sound
+        setHighlightedOption(1);
+        catAudio.play().catch(e => console.error("Audio play failed", e));
+
+        catAudio.onended = () => {
+          if (isCancelled) return;
+          // 3. Highlight Option 3 (Pig) & Play Sound
+          setHighlightedOption(2);
+          pigAudio.play().catch(e => console.error("Audio play failed", e));
+
+          pigAudio.onended = () => {
+            if (isCancelled) return;
+            setHighlightedOption(null); // End sequence
+          };
+        };
+      };
+    };
+
+    utterance.onend = playSequence;
+
+    // Start Narration
+    // Small delay to ensure clean start
+    const timer = setTimeout(() => {
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    }, 500);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+      window.speechSynthesis.cancel();
+      dogAudio.pause(); dogAudio.currentTime = 0;
+      catAudio.pause(); catAudio.currentTime = 0;
+      pigAudio.pause(); pigAudio.currentTime = 0;
+    };
+  }, [currentQuestionIndex, showResult]);
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -84,10 +150,10 @@ const Home = () => {
               >
                 {/* Title */}
                 <div className="text-center mb-10">
-                  <h1 className="text-6xl font-serif italic text-teal-700 mb-3">
+                  <h1 className="text-6xl font-serif italic text-teal-900 font-bold mb-3">
                     Test Your Knowledge
                   </h1>
-                  <p className="text-gray-600 text-lg">
+                  <p className="text-gray-800 text-lg font-medium">
                     Answer all questions to see your results
                   </p>
                 </div>
@@ -114,23 +180,26 @@ const Home = () => {
                     className="space-y-4 max-w-3xl mx-auto w-full"
                   >
                     <div className="bg-cyan-100 rounded-xl p-5 text-center">
-                      <p className="text-gray-800 text-xl font-medium">
+                      <p className="text-gray-900 text-xl font-bold">
                         {currentQuestion.question}
                       </p>
                     </div>
 
-                    {currentQuestion.options.map((option) => (
+                    {currentQuestion.options.map((option, idx) => (
                       <div
                         key={option}
                         onClick={() =>
                           setAnswers((prev) => ({ ...prev, [currentQuestion.id]: option }))
                         }
-                        className={`rounded-xl p-5 text-center cursor-pointer transition-all ${answers[currentQuestion.id] === option
-                          ? "bg-cyan-100"
-                          : "bg-gray-50"
+                        className={`rounded-xl p-5 text-center cursor-pointer transition-all duration-300 ${answers[currentQuestion.id] === option
+                            ? "bg-cyan-100"
+                            : "bg-gray-50"
+                          } ${idx === highlightedOption
+                            ? "ring-4 ring-yellow-400 scale-105 bg-yellow-100 shadow-xl"
+                            : ""
                           }`}
                       >
-                        <p className="text-gray-800 text-lg">{option}</p>
+                        <p className="text-gray-900 text-lg font-semibold">{option}</p>
                       </div>
                     ))}
                   </motion.div>

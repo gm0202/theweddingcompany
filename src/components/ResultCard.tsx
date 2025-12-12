@@ -38,7 +38,7 @@ export function ResultCard({ score, total, onRestart }: ResultCardProps) {
         >
             {/* Subheader Pill */}
             <div className="bg-white rounded-lg py-3 px-8 mb-10 shadow-sm border border-gray-200">
-                <span className="text-[#15313D] font-medium text-lg">Keep Learning!</span>
+                <span className="text-[#0B1B21] font-bold text-lg">Keep Learning!</span>
             </div>
 
             {/* Title */}
@@ -46,12 +46,12 @@ export function ResultCard({ score, total, onRestart }: ResultCardProps) {
                 className="mb-6"
                 style={{
                     fontFamily: '"DM Serif Display", serif',
-                    fontWeight: 400,
+                    fontWeight: 600,
                     fontStyle: "italic",
                     fontSize: "60px",
                     lineHeight: "100%",
                     letterSpacing: "-2px",
-                    background: "linear-gradient(90deg, #15313D 0%, #3CABDA 100%)",
+                    background: "linear-gradient(90deg, #0B1B21 0%, #2A8CB0 100%)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                 }}
@@ -64,10 +64,10 @@ export function ResultCard({ score, total, onRestart }: ResultCardProps) {
                 <motion.span
                     style={{
                         fontFamily: '"DM Serif Display", serif',
-                        fontWeight: 700,
+                        fontWeight: 900,
                         fontSize: "150px",
                         lineHeight: 1,
-                        background: "linear-gradient(90deg, #15313D 0%, #3CABDA 100%)",
+                        background: "linear-gradient(90deg, #0B1B21 0%, #2A8CB0 100%)",
                         WebkitBackgroundClip: "text",
                         WebkitTextFillColor: "transparent",
                     }}
@@ -80,7 +80,7 @@ export function ResultCard({ score, total, onRestart }: ResultCardProps) {
                         fontFamily: '"DM Serif Display", serif',
                         fontSize: "60px",
                         fontStyle: "italic",
-                        background: "linear-gradient(90deg, #15313D 0%, #3CABDA 100%)",
+                        background: "linear-gradient(90deg, #0B1B21 0%, #2A8CB0 100%)",
                         WebkitBackgroundClip: "text",
                         WebkitTextFillColor: "transparent",
                         marginLeft: "12px",
@@ -96,9 +96,9 @@ export function ResultCard({ score, total, onRestart }: ResultCardProps) {
                 className="
                     px-12 py-4 
                     bg-[#D0F0FA] hover:bg-[#BDEAF8] 
-                    text-[#15313D] 
+                    text-[#0B1B21] 
                     rounded-[12px] 
-                    font-bold text-lg
+                    font-extrabold text-lg
                     transition-all
                     shadow-sm
                 "
