@@ -2,6 +2,9 @@
 
 A magical, fully interactive quiz application built for children, featuring immersive audio-visual effects, animations, and gamified elements. Built with **Next.js 15**, **Tailwind CSS**, and **Framer Motion**.
 
+## Live Demo
+https://theweddingcompany-eta.vercel.app/
+
 ## ✨ Key Features
 
 ### 🔊 Audio & Narration
@@ -39,7 +42,7 @@ A magical, fully interactive quiz application built for children, featuring imme
    ```
 
 3. **Open the app**:
-   Visit [http://localhost:3000](http://localhost:3000)
+   Visit http://localhost:3000
 
 ## 📂 Project Structure
 
